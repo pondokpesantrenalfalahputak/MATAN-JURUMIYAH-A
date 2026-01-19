@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Absensi Al Falah Putak</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e293b"> <link rel="apple-touch-icon" href="kop pondok (2).png">
+
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e293b;
+            --success: #10b981;
+            --orange: #f59e0b;
+            --info: #3b82f6;
+            --purple: #8b5cf6;
+            --bg: #f1f5f9;
+            --white: #ffffff;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--primary);
+        }
+
+        .app-container { 
+            width: 100%;
+            max-width: 450px; 
+            flex: 1 0 auto;
+        }
+
+        .header { text-align: center; padding: 15px 0; }
+        .logo { height: 60px; width: auto; margin-bottom: 10px; object-fit: contain; }
+        .header h2 { margin: 0; font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px; }
+        .header p { margin: 5px 0 0; font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+
+        .scanner-section, .admin-manual-section {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        #reader { width: 100%; border-radius: 16px; overflow: hidden; border: none !important; }
+
+        .mode-switch {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 8px;
+            border-radius: 18px;
+            margin-bottom: 15px;
+        }
+
+        .btn-switch {
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            color: #64748b;
+        }
+
+        .btn-switch.active.masuk { background: var(--success); color: white; }
+        .btn-switch.active.pulang { background: var(--orange); color: white; }
+        .btn-switch.active.sakit { background: var(--info); color: white; }
+        .btn-switch.active.izin { background: var(--purple); color: white; }
+
+        /* Admin Manual Styling - SATU KOTAK SEARCHABLE DROPDOWN */
+        .admin-manual-section h4 { margin: 0 0 10px; font-size: 0.9rem; font-weight: 800; color: var(--primary); }
+        .admin-manual-group { display: flex; flex-direction: column; gap: 10px; position: relative; }
+        
+        /* Input yang terlihat seperti dropdown */
+        #inputSantri { 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 12px; 
+            border: 2px solid #e2e8f0; 
+            font-family: inherit; 
+            font-size: 0.95rem; 
+            outline: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            background-color: white;
+            transition: 0.3s;
+        }
+        
+        #inputSantri:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(30, 41, 59, 0.05); }
+
+        .btn-manual { 
+            background: var(--primary); color: white; border: none; padding: 14px; 
+            border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+        .btn-manual:active { transform: scale(0.98); }
+
+        .profile-card { 
+            display: none; text-align: center; padding: 20px;
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 20px; margin-top: 15px; border: 2px solid var(--success);
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        #fotoSantri { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #namaTerpilih { font-size: 1.1rem; font-weight: 800; margin-top: 10px; text-transform: uppercase; }
+        #infoStatus { font-size: 0.75rem; font-weight: 700; margin-top: 4px; }
+
+        #result { font-size: 0.9rem; font-weight: 700; color: #94a3b8; margin: 15px 0; text-align: center; }
+
+        .history-section { text-align: left; margin-bottom: 30px; }
+        .history-section h3 { font-size: 1rem; font-weight: 800; margin-bottom: 12px; padding-left: 5px; }
+        
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .history-item {
+            background: var(--white); padding: 12px 15px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .history-info b { font-size: 0.9rem; display: block; }
+        .history-info span { font-size: 0.7rem; color: #94a3b8; }
+        .history-badge { padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; }
+
+        .footer { flex-shrink: 0; padding: 20px 0; text-align: center; width: 100%; }
+        .footer-text { font-size: 0.90rem; color: var(--text-muted); font-weight: 800; letter-spacing: 0.3px; }
+
+        #reader__status_span { font-size: 0.8rem !important; }
+        button { font-family: inherit; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="header">
+            <img src="logo.png" alt="Logo" class="logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2641/2641409.png'">
+            <h2>Sistem Absensi Digital</h2>
+            <p>Kelas M.JURUMIYAH A</p>
+        </header>
+
+        <main class="scanner-section">
+            <div class="mode-switch">
+                <button id="btnMasuk" class="btn-switch active masuk" onclick="setStatus('Masuk')">MASUK</button>
+                <button id="btnPulang" class="btn-switch pulang" onclick="setStatus('Pulang')">PULANG</button>
+                <button id="btnSakit" class="btn-switch sakit" onclick="setStatus('Sakit')">SAKIT</button>
+                <button id="btnIzin" class="btn-switch izin" onclick="setStatus('Izin')">IZIN</button>
+            </div>
+
+            <div id="reader"></div>
+
+            <div id="profile" class="profile-card">
+                <img id="fotoSantri" src="" alt="Foto">
+                <div id="namaTerpilih"></div>
+                <div id="infoStatus"></div>
+                <div id="statusCari" style="font-size: 9px; color: #94a3b8; margin-top: 5px;"></div>
+            </div>
+
+            <div id="result">Siap melakukan scan...</div>
+        </main>
+
+        <section class="admin-manual-section">
+            <h4>Input Manual (Admin)</h4>
+            <div class="admin-manual-group">
+                <input type="text" id="inputSantri" list="dataSantriList" placeholder="Pilih/Ketik nama santri..." autocomplete="off" onfocus="this.value=''">
+                <datalist id="dataSantriList"></datalist>
+                
+                <button class="btn-manual" onclick="kirimManual()">Kirim Data Manual</button>
+            </div>
+        </section>
+
+        <section class="history-section">
+            <h3>Log Aktivitas</h3>
+            <div id="attendanceList" class="history-list"></div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-text">Hak cipta© Jakastra_official 2026. <br>Semua hak dilindungi.</div>
+    </footer>
+
+    <script>
+        const SHEET_ID = "17Iar42iAGrMjSxuh2fEPggEg8R6TlbEgCJilsFkbDNA";
+        const URL_GAS = "https://script.google.com/macros/s/AKfycbynlvnkAgeOWRzCpCvC95fu_c3i3BiFjfKAz4-p1QNBf5P1ngDiUoSxGgOxRjvlUQgIng/exec";
+        
+        let statusAbsen = "Masuk";
+
+        // Memuat data ke satu kotak tunggal
+        window.onload = function() {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=DataSantri&t=${new Date().getTime()}`;
+            fetch(url).then(res => res.text()).then(data => {
+                const json = JSON.parse(data.substr(47).slice(0, -2));
+                const rows = json.table.rows;
+                const dataList = document.getElementById('dataSantriList');
+                
+                rows.forEach(r => {
+                    if (r.c && r.c[0]) {
+                        let opt = document.createElement('option');
+                        opt.value = r.c[0].v;
+                        dataList.appendChild(opt);
+                    }
+                });
+            });
+        };
+
+        function setStatus(s) {
+            statusAbsen = s;
+            document.querySelectorAll('.btn-switch').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn' + s).classList.add('active');
+        }
+
+        function kirimManual() {
+            const inputNama = document.getElementById('inputSantri');
+            const nama = inputNama.value.trim();
+            
+            if (!nama) return alert("Pilih atau ketik nama santri terlebih dahulu!");
+            
+            // Validasi nama ada di daftar
+            const options = document.querySelectorAll('#dataSantriList option');
+            const listNama = Array.from(options).map(o => o.value);
+            
+            if (!listNama.includes(nama)) {
+                if (!confirm("Nama tidak ada dalam daftar. Tetap kirim?")) return;
+            }
+
+            if (confirm(`Kirim absensi ${statusAbsen} untuk ${nama}?`)) {
+                kirimData(nama);
+                inputNama.value = ""; 
+            }
+        }
+
+        function konversiLinkFoto(link) {
+            if (!link || !link.includes("drive.google.com")) return "https://www.w3schools.com/howto/img_avatar.png";
+            let id = "";
+            try {
+                if (link.includes("id=")) { id = link.split("id=")[1].split("&")[0]; }
+                else { id = link.split("/d/")[1].split("/")[0]; }
+                return `https://drive.google.com/thumbnail?id=${id}&sz=w500`;
+            } catch (e) { return "https://www.w3schools.com/howto/img_avatar.png"; }
+        }
+
+        function cariFotoOtomatis(namaSantri) {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=DataSantri`;
+            fetch(url).then(res => res.text()).then(data => {
+                const json = JSON.parse(data.substr(47).slice(0, -2));
+                const baris = json.table.rows;
+                let link = "https://www.w3schools.com/howto/img_avatar.png";
+                let ketemu = false;
+                for (let i = 0; i < baris.length; i++) {
+                    if (baris[i].c[0] && baris[i].c[0].v.toString().toLowerCase().trim() === namaSantri.toLowerCase().trim()) {
+                        if (baris[i].c[1]) { link = konversiLinkFoto(baris[i].c[1].v); ketemu = true; }
+                        break;
+                    }
+                }
+                document.getElementById('fotoSantri').src = link;
+                document.getElementById('statusCari').innerText = ketemu ? "Data Terverifikasi" : "Nama tidak ditemukan";
+            });
+        }
+
+        function kirimData(namaSantri) {
+            const resDiv = document.getElementById('result');
+            resDiv.innerHTML = "⌛ Sedang mencatat...";
+            cariFotoOtomatis(namaSantri);
+
+            fetch(URL_GAS, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ nama: namaSantri, status: statusAbsen }) })
+            .then(() => {
+                resDiv.innerHTML = "✅ Berhasil";
+                const profile = document.getElementById('profile');
+                profile.style.display = "block";
+                
+                const colors = { 'Masuk': 'var(--success)', 'Pulang': 'var(--orange)', 'Sakit': 'var(--info)', 'Izin': 'var(--purple)' };
+                profile.style.borderColor = colors[statusAbsen];
+                
+                document.getElementById('namaTerpilih').innerText = namaSantri;
+                const info = document.getElementById('infoStatus');
+                info.innerText = "ABSEN " + statusAbsen.toUpperCase() + " SUKSES";
+                info.style.color = colors[statusAbsen];
+
+                new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3').play();
+
+                const list = document.getElementById('attendanceList');
+                const time = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                
+                const badgeStyles = {
+                    'Masuk': { bg: '#d1fae5', tc: '#065f46' },
+                    'Pulang': { bg: '#fef3c7', tc: '#92400e' },
+                    'Sakit': { bg: '#dbeafe', tc: '#1e40af' },
+                    'Izin': { bg: '#f3e8ff', tc: '#6b21a8' }
+                };
+                
+                const style = badgeStyles[statusAbsen];
+                const item = `<div class="history-item">
+                                <div class="history-info"><b>${namaSantri}</b><span>${time} WIB</span></div>
+                                <div class="history-badge" style="background:${style.bg}; color:${style.tc}">${statusAbsen}</div>
+                              </div>`;
+                list.insertAdjacentHTML('afterbegin', item);
+            });
+        }
+
+        function onScanSuccess(decodedText) {
+            kirimData(decodedText);
+            html5QrcodeScanner.clear();
+            setTimeout(() => {
+                html5QrcodeScanner.render(onScanSuccess);
+                document.getElementById('profile').style.display = "none";
+                document.getElementById('result').innerHTML = "Siap melakukan scan...";
+            }, 8000);
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: {width: 250, height: 250} });
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+                });
+            }
+    </script>
+</body>
+</html>

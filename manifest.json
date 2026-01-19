@@ -1,0 +1,16 @@
+{
+  "short_name": "Absensi",
+  "name": "Sistem Absensi Al Falah",
+  "icons": [
+    {
+      "src": "kop pondok (2).png",
+      "sizes": "512x467",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme-color": "#1e293b",
+  "background_color": "#f1f5f9"
+}
